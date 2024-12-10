@@ -1,0 +1,54 @@
+package SynchronisationThreads;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+import InterfaceGraphique.MainApplication;
+
+public class SimulateurLivraison extends Thread {
+    private final GestionnaireColis gestionnaireColis;
+    private final MainApplication mainApp; // Référence à l'interface graphique
+
+    // Constructeur
+    public SimulateurLivraison(GestionnaireColis gestionnaireColis, MainApplication mainApp) {
+        this.gestionnaireColis = gestionnaireColis;
+        this.mainApp = mainApp;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            long startTime = System.currentTimeMillis(); // Temps de début
+
+            try {
+                // Modifier les états des colis
+                boolean miseAJourEffectuee = false;
+                for (Colis colis : gestionnaireColis.obtenirColis()) {
+                    if (colis.getEtat().equals("En attente")) {
+                        colis.setEtat("En transit");
+                        miseAJourEffectuee = true;
+                    } else if (colis.getEtat().equals("En transit")) {
+                        gestionnaireColis.marquerLivraison(colis.getId());
+                        miseAJourEffectuee = true;
+                    }
+                }
+
+                // Si une mise à jour a été effectuée, notifier l'interface graphique
+                if (miseAJourEffectuee) {
+                    mainApp.notifierChangementEtat();
+                }
+
+                // Calculer le temps écoulé
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                long sleepTime = 5000 - elapsedTime;
+
+                if (sleepTime > 0) {
+                    Thread.sleep(sleepTime); // Ajuster le délai pour maintenir un intervalle de 5 secondes
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+
+}

@@ -1,0 +1,47 @@
+package SynchronisationThreads;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+import InterfaceGraphique.MainApplication;
+
+public class SimulateurLivraison extends Thread {
+    private final GestionnaireColis gestionnaireColis;
+    private final MainApplication mainApp; // Référence à l'interface graphique
+
+    // Constructeur
+    public SimulateurLivraison(GestionnaireColis gestionnaireColis, MainApplication mainApp) {
+        this.gestionnaireColis = gestionnaireColis;
+        this.mainApp = mainApp;
+    }
+
+    @Override
+    public void run() {
+        String[] etapesLivraison = {"Tri en cours", "En route vers le centre de tri", "En route vers destination"};
+        while (true) {
+            try {
+                Thread.sleep(5000); // Pause de 5 secondes
+                for (Colis colis : gestionnaireColis.obtenirColis()) {
+                    if (colis.getEtat().equals("En attente")) {
+                        gestionnaireColis.mettreAJourEtat(colis.getId(), "Tri en cours");
+                    } else if (colis.getEtat().equals("Tri en cours")) {
+                        gestionnaireColis.mettreAJourEtat(colis.getId(), "En transit");
+                    } else if (colis.getEtat().equals("En transit")) {
+                        if (Math.random() > 0.7) { // Probabilité de livraison
+                            gestionnaireColis.marquerLivraison(colis.getId()); // Marque comme livré
+                        } else {
+                            // Continue les étapes intermédiaires de transit
+                            String nouvelleEtape = etapesLivraison[(int) (Math.random() * etapesLivraison.length)];
+                            gestionnaireColis.mettreAJourEtat(colis.getId(), nouvelleEtape);
+                        }
+                    }
+                }
+                mainApp.notifierChangementEtat();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+
+
+}

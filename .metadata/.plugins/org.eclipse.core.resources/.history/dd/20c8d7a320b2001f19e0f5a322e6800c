@@ -1,0 +1,119 @@
+package InterfaceGraphique;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+import SynchronisationThreads.SimulateurLivraison;
+
+
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Date;
+
+public class MainApplication extends JFrame {
+    private final GestionnaireColis gestionnaireColis = new GestionnaireColis();
+    private final DefaultListModel<String> listModel = new DefaultListModel<>();
+
+    public MainApplication() {
+        // Configurer FlatLaf pour un design moderne
+        FlatLightLaf.setup();
+
+        // Configurer la fenêtre principale
+        setTitle("Système de Livraison de Colis - Moderne");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null); // Centrer la fenêtre
+
+        // Layout principal
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Header
+        JLabel headerLabel = new JLabel("Système de Gestion des Colis", SwingConstants.CENTER);
+        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        headerLabel.setForeground(new Color(0, 102, 204));
+
+        // Formulaire pour ajouter un colis
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Ajouter un Colis"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField utilisateurField = new JTextField(20);
+        JButton ajouterButton = new JButton("Ajouter Colis");
+        ajouterButton.setBackground(new Color(51, 204, 51));
+        ajouterButton.setForeground(Color.WHITE);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        formPanel.add(new JLabel("Nom de l'utilisateur:"), gbc);
+
+        gbc.gridx = 1;
+        formPanel.add(utilisateurField, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        formPanel.add(ajouterButton, gbc);
+
+        // Liste des colis
+        JList<String> colisList = new JList<>(listModel);
+        colisList.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        JScrollPane scrollPane = new JScrollPane(colisList);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Liste des Colis"));
+
+        // Pied de page
+        JLabel footerLabel = new JLabel("Application développée par [Votre Nom]", SwingConstants.CENTER);
+        footerLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        footerLabel.setForeground(new Color(128, 128, 128));
+
+        // Ajouter des composants au panneau principal
+        mainPanel.add(headerLabel, BorderLayout.NORTH);
+        mainPanel.add(formPanel, BorderLayout.WEST);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(footerLabel, BorderLayout.SOUTH);
+
+        // Ajouter le panneau principal
+        add(mainPanel);
+
+        // Action pour ajouter un colis
+        ajouterButton.addActionListener((ActionEvent e) -> {
+            String utilisateur = utilisateurField.getText();
+            if (!utilisateur.isEmpty()) {
+                int id = gestionnaireColis.obtenirColis().size() + 1;
+                Date dateEnregistrement = new Date();
+                Colis colis = new Colis(id, "En attente", utilisateur, "Destination", dateEnregistrement, null);
+                gestionnaireColis.ajouterColis(colis);
+                utilisateurField.setText("");
+                mettreAJourListe();
+            } else {
+                JOptionPane.showMessageDialog(MainApplication.this, "Veuillez entrer un nom d'utilisateur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // Lancer le simulateur
+        new SimulateurLivraison(gestionnaireColis, this).start();
+    }
+
+    // Méthode pour mettre à jour la liste graphique
+    private synchronized void mettreAJourListe() {
+        listModel.clear();
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            listModel.addElement("Colis " + colis.getId() + ": " + colis.getEtat() + " (" + colis.getDetailsUtilisateur() + ")");
+        }
+    }
+
+    // Méthode appelée par le simulateur pour notifier des changements
+    public synchronized void notifierChangementEtat() {
+        SwingUtilities.invokeLater(this::mettreAJourListe);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainApplication app = new MainApplication();
+            app.setVisible(true);
+        });
+    }
+}

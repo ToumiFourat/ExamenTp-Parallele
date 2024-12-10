@@ -1,0 +1,73 @@
+package InterfaceGraphique;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
+import gestioncolis.GestionnaireColis;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+    private GestionnaireColis gestionnaireColis;
+
+    @Override
+    public void start(Stage primaryStage) {
+        gestionnaireColis = new GestionnaireColis();
+
+        // Layout principal
+        VBox root = new VBox(10);
+        root.setStyle("-fx-padding: 10;");
+
+        // Formulaire pour ajouter un colis
+        TextField utilisateurField = new TextField();
+        utilisateurField.setPromptText("Nom de l'utilisateur");
+
+        Button ajouterButton = new Button("Ajouter Colis");
+        ajouterButton.setOnAction(e -> {
+            int id = gestionnaireColis.obtenirColis().size() + 1;
+            String details = utilisateurField.getText();
+            Colis colis = new Colis(id, "en attente", details);
+            gestionnaireColis.ajouterColis(colis);
+            utilisateurField.clear();
+            afficherColis(root);
+        });
+
+        // Tableau pour afficher les colis
+        root.getChildren().addAll(utilisateurField, ajouterButton);
+        afficherColis(root);
+
+        Scene scene = new Scene(root, 400, 300);
+        primaryStage.setTitle("Gestion des Colis");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void afficherColis(VBox root) {
+        TableView<Colis> tableView = new TableView<>();
+        // Colonnes pour ID, État, et Détails utilisateur
+        TableColumn<Colis, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleObjectProperty<>(cell.getValue().getId()));
+
+        TableColumn<Colis, String> etatCol = new TableColumn<>("État");
+        etatCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getEtat()));
+
+        TableColumn<Colis, String> detailsCol = new TableColumn<>("Détails Utilisateur");
+        detailsCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getDetailsUtilisateur()));
+
+        tableView.getColumns().addAll(idCol, etatCol, detailsCol);
+        tableView.getItems().addAll(gestionnaireColis.obtenirColis());
+
+        root.getChildren().add(tableView);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}

@@ -1,0 +1,37 @@
+package SynchronisationThreads;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+
+public class SimulateurLivraison extends Thread {
+    private final GestionnaireColis gestionnaireColis;
+
+    // Constructeur qui prend le gestionnaire de colis comme paramètre
+    public SimulateurLivraison(GestionnaireColis gestionnaireColis) {
+        this.gestionnaireColis = gestionnaireColis;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(5000); // Simulation toutes les 5 secondes.
+
+                // Obtenir tous les colis
+                for (Colis colis : gestionnaireColis.obtenirColis()) {
+                    // Si le colis est "En attente", le passer en "En transit"
+                    if (colis.getEtat().equals("En attente")) {
+                        colis.setEtat("En transit");
+                    } 
+                    // Si le colis est "En transit", appeler la méthode pour le marquer comme "Livré"
+                    else if (colis.getEtat().equals("En transit")) {
+                        gestionnaireColis.marquerLivraison(colis.getId());  // Appel à la méthode pour marquer comme "Livré"
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();  // Gérer l'interruption du thread
+                break;
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+package gestioncolis;
+
+
+
+public class Colis {
+    private int id;
+    private String etat;
+    private String detailsUtilisateur;
+
+    public Colis(int id, String etat, String detailsUtilisateur) {
+        this.id = id;
+        this.etat = etat;
+        this.detailsUtilisateur = detailsUtilisateur;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public synchronized String getEtat() {
+        return etat;
+    }
+
+    public synchronized void setEtat(String etat) {
+        this.etat = etat;
+    }
+
+    public String getDetailsUtilisateur() {
+        return detailsUtilisateur;
+    }
+}

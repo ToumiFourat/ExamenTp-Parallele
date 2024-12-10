@@ -1,0 +1,100 @@
+package gestioncolis;
+
+import java.lang.System.Logger;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
+
+
+public class GestionnaireColis {
+
+    private static final Logger LOGGER = Logger.getLogger(GestionnaireColis.class.getName());
+
+    // Map pour une recherche efficace des colis par ID
+    private final Map<Integer, Colis> colisMap;
+
+    // Lock pour protéger les sections critiques
+    private final ReentrantLock lock;
+
+    public GestionnaireColis() {
+        this.colisMap = new ConcurrentHashMap<>(); // Thread-safe par nature
+        this.lock = new ReentrantLock();
+    }
+
+    // Ajouter un colis
+    public void ajouterColis(Colis colis) {
+        Objects.requireNonNull(colis, "Le colis ne peut pas être null.");
+        lock.lock();
+        try {
+            if (colisMap.containsKey(colis.getId())) {
+                LOGGER.log(Level.WARNING, "Un colis avec l'ID {0} existe déjà.", colis.getId());
+                return;
+            }
+            colisMap.put(colis.getId(), colis);
+            LOGGER.log(Level.INFO, "Colis ajouté avec succès : {0}", colis.getId());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Supprimer un colis par ID
+    public boolean supprimerColis(int id) {
+        lock.lock();
+        try {
+            if (colisMap.remove(id) != null) {
+                LOGGER.log(Level.INFO, "Colis avec ID {0} supprimé avec succès.", id);
+                return true;
+            } else {
+                LOGGER.log(Level.WARNING, "Aucun colis trouvé avec l'ID {0}.", id);
+                return false;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Rechercher un colis par ID
+    public Colis rechercherColis(int id) {
+        Colis colis = colisMap.get(id);
+        if (colis != null) {
+            LOGGER.log(Level.INFO, "Colis trouvé : {0}", colis.getId());
+        } else {
+            LOGGER.log(Level.WARNING, "Aucun colis trouvé avec l'ID {0}.", id);
+        }
+        return colis;
+    }
+
+    // Afficher tous les colis
+    public List<Colis> listerColis() {
+        List<Colis> listeColis = new ArrayList<>(colisMap.values());
+        LOGGER.log(Level.INFO, "Nombre total de colis : {0}", listeColis.size());
+        return listeColis;
+    }
+
+    // Mettre à jour l'état d'un colis
+    public boolean mettreAJourEtatColis(int id, EtatColis nouvelEtat) {
+        lock.lock();
+        try {
+            Colis colis = colisMap.get(id);
+            if (colis != null) {
+                colis.setEtat(nouvelEtat);
+                LOGGER.log(Level.INFO, "État du colis avec ID {0} mis à jour à {1}.", new Object[]{id, nouvelEtat});
+                return true;
+            } else {
+                LOGGER.log(Level.WARNING, "Aucun colis trouvé avec l'ID {0} pour mise à jour.", id);
+                return false;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Méthode pour afficher les détails de tous les colis (utile pour debug)
+    public void afficherDetailsColis() {
+        LOGGER.log(Level.INFO, "Détails de tous les colis :");
+        for (Colis colis : colisMap.values()) {
+            LOGGER.log(Level.INFO, "\n{0}", colis.afficherDetails());
+        }
+    }
+}

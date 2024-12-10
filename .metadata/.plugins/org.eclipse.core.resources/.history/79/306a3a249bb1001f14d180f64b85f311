@@ -1,0 +1,94 @@
+package gestioncolis;
+
+import java.util.Date;
+
+public class Colis {
+
+    // Attributs de la classe Colis
+    private int id;
+    private String etat;                  // Etat du colis : "En attente", "En transit", "Livré"
+    private String detailsUtilisateur;     // Détails de l'utilisateur (nom, adresse, etc.)
+    private String destination;            // Destination du colis
+    private Date dateEnregistrement;       // Date d'enregistrement du colis
+    private Date dateLivraison;            // Date de livraison du colis
+
+    // Constructeur
+    public Colis(int id, String etat, String detailsUtilisateur, String destination, Date dateEnregistrement, Date dateLivraison) {
+        this.id = id;
+        this.etat = etat;
+        this.detailsUtilisateur = detailsUtilisateur;
+        this.destination = destination;
+        this.dateEnregistrement = dateEnregistrement;
+        this.dateLivraison = dateLivraison;
+    }
+
+    // Getter pour l'ID
+    public int getId() {
+        return id;
+    }
+
+    // Setter pour l'ID
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    // Getter pour l'état du colis
+    public String getEtat() {
+        return etat;
+    }
+
+    // Setter pour l'état du colis
+    public void setEtat(String etat) {
+        this.etat = etat;
+    }
+
+    // Getter pour les détails de l'utilisateur
+    public String getDetailsUtilisateur() {
+        return detailsUtilisateur;
+    }
+
+    // Setter pour les détails de l'utilisateur
+    public void setDetailsUtilisateur(String detailsUtilisateur) {
+        this.detailsUtilisateur = detailsUtilisateur;
+    }
+
+    // Getter pour la destination
+    public String getDestination() {
+        return destination;
+    }
+
+    // Setter pour la destination
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    // Getter pour la date d'enregistrement
+    public Date getDateEnregistrement() {
+        return dateEnregistrement;
+    }
+
+    // Setter pour la date d'enregistrement
+    public void setDateEnregistrement(Date dateEnregistrement) {
+        this.dateEnregistrement = dateEnregistrement;
+    }
+
+    // Getter pour la date de livraison
+    public Date getDateLivraison() {
+        return dateLivraison;
+    }
+
+    // Setter pour la date de livraison
+    public void setDateLivraison(Date dateLivraison) {
+        this.dateLivraison = dateLivraison;
+    }
+
+    // Méthode pour afficher les informations du colis
+    public String afficherDetails() {
+        return "Colis ID: " + id + "\n" +
+               "Etat: " + etat + "\n" +
+               "Détails de l'utilisateur: " + detailsUtilisateur + "\n" +
+               "Destination: " + destination + "\n" +
+               "Date d'enregistrement: " + dateEnregistrement + "\n" +
+               "Date de livraison: " + (dateLivraison != null ? dateLivraison : "Non livrée");
+    }
+}

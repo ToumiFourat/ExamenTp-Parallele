@@ -1,0 +1,41 @@
+package gestioncolis;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
+public class GestionnaireColis {
+    private final List<Colis> colisList = new ArrayList<>();
+    private final Semaphore semaphore = new Semaphore(1); // Sémaphore pour synchroniser l'accès.
+
+    public void ajouterColis(Colis colis) {
+        try {
+            semaphore.acquire(); // Accès exclusif.
+            colisList.add(colis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            semaphore.release(); // Libération.
+        }
+    }
+
+    public List<Colis> obtenirColis() {
+        try {
+            semaphore.acquire();
+            return new ArrayList<>(colisList); // Retourne une copie pour éviter les conflits.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
+        } finally {
+            semaphore.release();
+        }
+    }
+
+    public synchronized void marquerLivraison(int id) {
+        for (Colis colis : colisList) {
+            if (colis.getId() == id) {
+                colis.setEtat("Livré");
+            }
+        }
+    }
+}

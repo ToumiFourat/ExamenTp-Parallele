@@ -1,0 +1,29 @@
+package gestioncolis;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
+public class GestionnaireColis {
+    private final List<Colis> colisList = new ArrayList<>();
+    private final Semaphore semaphore = new Semaphore(1, true); // Assure une synchronisation juste.
+
+    public void ajouterColis(Colis colis) {
+        try {
+            semaphore.acquire();
+            colisList.add(colis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            semaphore.release();
+        }
+    }
+
+    public List<Colis> obtenirColis() {
+        return colisList;
+    }
+
+    public synchronized void livrerColis(Colis colis) {
+        colis.setEtat("Livré");
+    }
+}

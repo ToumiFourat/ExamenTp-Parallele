@@ -1,0 +1,116 @@
+package gestioncolis;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+
+// Enum pour l'état du colis
+enum EtatColis {
+    EN_ATTENTE,
+    EN_TRANSIT,
+    LIVRE
+}
+
+public class Colis {
+
+    // Attributs privés avec encapsulation
+    private final int id;
+    private EtatColis etat;
+    private final String detailsUtilisateur; // Information utilisateur
+    private final String destination;
+    private final Date dateEnregistrement;
+    private Date dateLivraison; // Peut être null si non livré
+    private final List<String> suivi;
+
+    // Formatage de dates
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+    // Constructeur avec validations
+    public Colis(int id, String detailsUtilisateur, String destination) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("L'ID doit être un entier positif.");
+        }
+        this.id = id;
+        this.detailsUtilisateur = Objects.requireNonNull(detailsUtilisateur, "Les détails de l'utilisateur ne peuvent pas être null.");
+        this.destination = Objects.requireNonNull(destination, "La destination ne peut pas être null.");
+        this.dateEnregistrement = new Date();
+        this.etat = EtatColis.EN_ATTENTE;
+        this.suivi = new ArrayList<>();
+        ajouterEtape("Colis enregistré.");
+    }
+
+    // Getters
+    public int getId() {
+        return id;
+    }
+
+    public EtatColis getEtat() {
+        return etat;
+    }
+
+    public String getDetailsUtilisateur() {
+        return detailsUtilisateur;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public String getDateEnregistrement() {
+        return formatDate(dateEnregistrement);
+    }
+
+    public String getDateLivraison() {
+        return dateLivraison != null ? formatDate(dateLivraison) : "Non livré";
+    }
+
+    public List<String> getSuivi() {
+        return new ArrayList<>(suivi); // Renvoie une copie pour éviter les modifications externes
+    }
+
+    // Setters avec validation
+    public void setEtat(EtatColis etat) {
+        if (etat == null) {
+            throw new IllegalArgumentException("L'état ne peut pas être null.");
+        }
+        this.etat = etat;
+        ajouterEtape("État mis à jour à : " + etat);
+    }
+
+    public void setDateLivraison(Date dateLivraison) {
+        if (dateLivraison == null || dateLivraison.before(dateEnregistrement)) {
+            throw new IllegalArgumentException("La date de livraison doit être après la date d'enregistrement.");
+        }
+        this.dateLivraison = dateLivraison;
+        ajouterEtape("Date de livraison mise à jour : " + formatDate(dateLivraison));
+    }
+
+    // Méthode pour ajouter une étape de suivi
+    public void ajouterEtape(String etape) {
+        Objects.requireNonNull(etape, "L'étape de suivi ne peut pas être null.");
+        suivi.add(DATE_FORMAT.format(new Date()) + " - " + etape);
+    }
+
+    // Méthode pour afficher les informations du colis
+    public String afficherDetails() {
+        StringBuilder details = new StringBuilder();
+        details.append("Colis ID: ").append(id).append("\n");
+        details.append("État: ").append(etat).append("\n");
+        details.append("Détails utilisateur: ").append(detailsUtilisateur).append("\n");
+        details.append("Destination: ").append(destination).append("\n");
+        details.append("Date d'enregistrement: ").append(getDateEnregistrement()).append("\n");
+        details.append("Date de livraison: ").append(getDateLivraison()).append("\n");
+        details.append("Suivi:").append("\n");
+        for (String etape : suivi) {
+            details.append("  - ").append(etape).append("\n");
+        }
+        return details.toString();
+    }
+
+    // Méthode utilitaire pour formater les dates
+    private String formatDate(Date date) {
+        return DATE_FORMAT.format(date);
+    }
+}

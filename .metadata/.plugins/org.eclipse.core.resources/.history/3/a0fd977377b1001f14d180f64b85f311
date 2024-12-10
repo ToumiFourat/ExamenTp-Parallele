@@ -1,0 +1,82 @@
+package InterfaceGraphique;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import gestioncolis.GestionnaireColis;
+import gestioncolis.Colis;
+
+public class Main extends JFrame {
+    private GestionnaireColis gestionnaireColis;
+    private JTable table;
+    private DefaultTableModel tableModel;
+
+    public Main() {
+        gestionnaireColis = new GestionnaireColis();
+
+        // Configuration de la fenêtre
+        setTitle("Gestion des Colis");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Layout principal
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setContentPane(panel);
+
+        // Formulaire pour ajouter un colis
+        JPanel formPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField utilisateurField = new JTextField(20);
+        JButton ajouterButton = new JButton("Ajouter Colis");
+
+        formPanel.add(new JLabel("Nom de l'utilisateur:"));
+        formPanel.add(utilisateurField);
+        formPanel.add(ajouterButton);
+
+        // Tableau pour afficher les colis
+        String[] columnNames = {"ID", "État", "Détails Utilisateur"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        table = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        panel.add(formPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Action du bouton "Ajouter Colis"
+        ajouterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int id = gestionnaireColis.obtenirColis().size() + 1;
+                String details = utilisateurField.getText();
+                if (!details.isEmpty()) {
+                    Colis colis = new Colis(id, "en attente", details);
+                    gestionnaireColis.ajouterColis(colis);
+                    utilisateurField.setText("");
+                    rafraichirTable();
+                } else {
+                    JOptionPane.showMessageDialog(Main.this, "Veuillez entrer un nom d'utilisateur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Initialisation des données dans la table
+        rafraichirTable();
+    }
+
+    private void rafraichirTable() {
+        tableModel.setRowCount(0); // Effacer les lignes existantes
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            tableModel.addRow(new Object[]{colis.getId(), colis.getEtat(), colis.getDetailsUtilisateur()});
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            Main frame = new MainSwing();
+            frame.setVisible(true);
+        });
+    }
+}

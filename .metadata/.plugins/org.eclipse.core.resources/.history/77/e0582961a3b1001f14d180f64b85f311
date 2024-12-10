@@ -1,0 +1,120 @@
+package InterfaceGraphique;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+
+import javax.swing.*;
+import SynchronisationThreads.SimulateurLivraison;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Date;
+
+public class MainApplication extends JFrame {
+    private GestionnaireColis gestionnaireColis = new GestionnaireColis();
+    private DefaultListModel<String> listModel = new DefaultListModel<>();
+
+    public MainApplication() {
+        // Configurer la fenêtre principale
+        setTitle("Système de Livraison de Colis");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null); // Centrer la fenêtre à l'écran
+
+        // Layout principal
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+
+        // Formulaire pour ajouter un colis
+        JPanel formPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        formPanel.setBackground(new Color(60, 63, 65));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JTextField utilisateurField = new JTextField(20);
+        utilisateurField.setFont(new Font("Arial", Font.PLAIN, 14));
+        
+        JButton ajouterButton = new JButton("Ajouter Colis");
+        styleButton(ajouterButton, new Color(46, 204, 113));
+
+        formPanel.add(new JLabel("Nom de l'utilisateur:")).setForeground(Color.WHITE);
+        formPanel.add(utilisateurField);
+        formPanel.add(ajouterButton);
+
+        // Liste des colis
+        JList<String> colisList = new JList<>(listModel);
+        colisList.setFont(new Font("Arial", Font.PLAIN, 14));
+        colisList.setBackground(new Color(238, 238, 238));
+        JScrollPane scrollPane = new JScrollPane(colisList);
+
+        // Bouton pour simuler la livraison
+        JButton livrerButton = new JButton("Simuler Livraison");
+        styleButton(livrerButton, new Color(52, 152, 219));
+
+        // Ajout des composants
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(livrerButton, BorderLayout.SOUTH);
+
+        // Action pour ajouter un colis
+        ajouterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String utilisateur = utilisateurField.getText();
+                if (!utilisateur.isEmpty()) {
+                    int id = gestionnaireColis.obtenirColis().size() + 1;
+                    Date dateEnregistrement = new Date();  // Date actuelle pour l'enregistrement
+                    Colis colis = new Colis(id, "En attente", utilisateur, "Destination", dateEnregistrement, null);
+                    gestionnaireColis.ajouterColis(colis);
+                    utilisateurField.setText("");
+                    mettreAJourListe();
+                } else {
+                    JOptionPane.showMessageDialog(MainApplication.this, "Veuillez entrer un nom d'utilisateur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Action pour simuler la livraison
+        livrerButton.addActionListener(e -> {
+            // Simulation du changement d'état pour chaque colis
+            for (Colis colis : gestionnaireColis.obtenirColis()) {
+                if (colis.getEtat().equals("En attente")) {
+                    colis.setEtat("En transit");
+                } else if (colis.getEtat().equals("En transit")) {
+                    colis.setEtat("Livré");
+                    colis.setDateLivraison(new Date());
+                }
+            }
+            mettreAJourListe();
+        });
+
+        // Ajouter le panneau principal
+        add(mainPanel);
+
+        // Lancer le simulateur
+        new SimulateurLivraison(gestionnaireColis).start();
+    }
+
+    private void styleButton(JButton button, Color bgColor) {
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.BLACK),
+            BorderFactory.createEmptyBorder(5, 15, 5, 15)
+        ));
+    }
+
+    private void mettreAJourListe() {
+        listModel.clear();
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            listModel.addElement("Colis " + colis.getId() + ": " + colis.getEtat() + " (" + colis.getDetailsUtilisateur() + ")");
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainApplication app = new MainApplication();
+            app.setVisible(true);
+        });
+    }
+}

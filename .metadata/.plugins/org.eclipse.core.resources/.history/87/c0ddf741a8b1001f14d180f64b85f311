@@ -1,0 +1,93 @@
+package InterfaceGraphique;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+import SynchronisationThreads.SimulateurLivraison;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Date;
+
+public class MainApplication extends JFrame {
+    private final GestionnaireColis gestionnaireColis = new GestionnaireColis();
+    private final DefaultListModel<String> listModel = new DefaultListModel<>();
+
+    public MainApplication() {
+        // Configurer la fenêtre principale
+        setTitle("Système de Livraison de Colis");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Layout principal
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+
+        // Formulaire pour ajouter un colis
+        JPanel formPanel = new JPanel(new FlowLayout());
+        JTextField utilisateurField = new JTextField(20);
+        JButton ajouterButton = new JButton("Ajouter Colis");
+
+        // Ajout de styles aux composants
+        formPanel.setBackground(Color.LIGHT_GRAY);
+        ajouterButton.setBackground(Color.GREEN);
+        ajouterButton.setForeground(Color.WHITE);
+        ajouterButton.setFont(new Font("Arial", Font.BOLD, 12));
+
+        formPanel.add(new JLabel("Nom de l'utilisateur:"));
+        formPanel.add(utilisateurField);
+        formPanel.add(ajouterButton);
+
+        // Liste des colis
+        JList<String> colisList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(colisList);
+
+        // Ajouter des composants au panneau principal
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Action pour ajouter un colis
+        ajouterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String utilisateur = utilisateurField.getText();
+                if (!utilisateur.isEmpty()) {
+                    int id = gestionnaireColis.obtenirColis().size() + 1;
+                    Date dateEnregistrement = new Date();  // Date actuelle pour l'enregistrement
+                    Colis colis = new Colis(id, "En attente", utilisateur, "Destination", dateEnregistrement, null);
+                    gestionnaireColis.ajouterColis(colis);
+                    utilisateurField.setText("");
+                    mettreAJourListe();
+                } else {
+                    JOptionPane.showMessageDialog(MainApplication.this, "Veuillez entrer un nom d'utilisateur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Ajouter le panneau principal
+        add(mainPanel);
+
+        // Lancer le simulateur avec une référence à cette classe
+        new SimulateurLivraison(gestionnaireColis, this).start();
+    }
+
+    // Méthode pour mettre à jour la liste graphique
+    private synchronized void mettreAJourListe() {
+        listModel.clear();
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            listModel.addElement("Colis " + colis.getId() + ": " + colis.getEtat() + " (" + colis.getDetailsUtilisateur() + ")");
+        }
+    }
+
+    // Méthode appelée par le simulateur pour notifier des changements
+    public synchronized void notifierChangementEtat() {
+        SwingUtilities.invokeLater(this::mettreAJourListe);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainApplication app = new MainApplication();
+            app.setVisible(true);
+        });
+    }
+}

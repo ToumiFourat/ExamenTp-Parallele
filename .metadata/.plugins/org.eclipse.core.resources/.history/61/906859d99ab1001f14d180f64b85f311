@@ -1,0 +1,32 @@
+package SynchronisationThreads;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+
+public class SimulateurLivraison extends Thread {
+    private final GestionnaireColis gestionnaireColis;
+
+    public SimulateurLivraison(GestionnaireColis gestionnaireColis) {
+        this.gestionnaireColis = gestionnaireColis;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(5000); // Simulation toutes les 5 secondes.
+                for (Colis colis : gestionnaireColis.obtenirColis()) {
+                    if (colis.getEtat().equals("En attente")) 
+                    {
+                        colis.setEtat("En transit");
+                    } else if (colis.getEtat().equals("En transit")) {
+                        colis.setEtat("Livré");
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+}

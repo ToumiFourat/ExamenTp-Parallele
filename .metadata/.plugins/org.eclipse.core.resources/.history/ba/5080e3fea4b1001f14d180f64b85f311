@@ -1,0 +1,107 @@
+package InterfaceGraphique;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+
+import javax.swing.*;
+import SynchronisationThreads.SimulateurLivraison;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Date;
+
+public class MainApplication extends JFrame {
+    private GestionnaireColis gestionnaireColis = new GestionnaireColis();
+    private DefaultListModel<String> listModel = new DefaultListModel<>();
+
+    public MainApplication() {
+        // Configurer la fenêtre principale
+        setTitle("Système de Livraison de Colis");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Layout principal
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+
+        // Formulaire pour ajouter un colis
+        JPanel formPanel = new JPanel(new FlowLayout());
+        JTextField utilisateurField = new JTextField(20);
+        JButton ajouterButton = new JButton("Ajouter Colis");
+
+        // Ajout de styles aux composants
+        formPanel.setBackground(Color.LIGHT_GRAY);
+        ajouterButton.setBackground(Color.GREEN);
+        ajouterButton.setForeground(Color.WHITE);
+        ajouterButton.setFont(new Font("Arial", Font.BOLD, 12));
+
+        formPanel.add(new JLabel("Nom de l'utilisateur:"));
+        formPanel.add(utilisateurField);
+        formPanel.add(ajouterButton);
+
+        // Liste des colis
+        JList<String> colisList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(colisList);
+
+        // Ajouter des composants au panneau principal
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Action pour ajouter un colis
+        ajouterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String utilisateur = utilisateurField.getText();
+                if (!utilisateur.isEmpty()) {
+                    int id = gestionnaireColis.obtenirColis().size() + 1;
+                    Date dateEnregistrement = new Date();  // Date actuelle pour l'enregistrement
+                    Colis colis = new Colis(id, "En attente", utilisateur, "Destination", dateEnregistrement, null);
+                    gestionnaireColis.ajouterColis(colis);
+                    utilisateurField.setText("");
+                    mettreAJourListe();
+
+                    // Simuler automatiquement la livraison après l'ajout du colis
+                    simulerLivraison(); // Simulation immédiate
+                } else {
+                    JOptionPane.showMessageDialog(MainApplication.this, "Veuillez entrer un nom d'utilisateur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Ajouter le panneau principal
+        add(mainPanel);
+
+        // Lancer le simulateur (si nécessaire)
+        new SimulateurLivraison(gestionnaireColis).start();
+    }
+
+    private void mettreAJourListe() {
+        listModel.clear();
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            listModel.addElement("Colis " + colis.getId() + ": " + colis.getEtat() + " (" + colis.getDetailsUtilisateur() + ")");
+        }
+    }
+
+    // Méthode pour simuler la livraison
+    private void simulerLivraison() {
+        // Simulation du changement d'état pour chaque colis
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            if (colis.getEtat().equals("En attente")) {
+                colis.setEtat("En transit");
+            } else if (colis.getEtat().equals("En transit")) {
+                colis.setEtat("Livré");
+                colis.setDateLivraison(new Date());
+            }
+        }
+        mettreAJourListe();
+    }
+    public synchronized void notifierChangementEtat() {
+        SwingUtilities.invokeLater(this::mettreAJourListe);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainApplication app = new MainApplication();
+            app.setVisible(true);
+        });
+    }
+}

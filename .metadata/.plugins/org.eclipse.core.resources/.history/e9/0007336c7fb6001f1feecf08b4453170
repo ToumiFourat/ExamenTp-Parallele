@@ -1,0 +1,152 @@
+package InterfaceGraphique;
+
+import gestioncolis.Colis;
+import gestioncolis.GestionnaireColis;
+import SynchronisationThreads.SimulateurLivraison;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Date;
+
+public class MainApplication extends JFrame {
+
+    private final GestionnaireColis gestionnaireColis = new GestionnaireColis();
+    private final DefaultListModel<Colis> listModel = new DefaultListModel<>();
+    private final JList<Colis> colisList = new JList<>(listModel);
+
+    private JPanel formPanel;
+    private JTextField utilisateurField;
+    private JTextField destinationField;
+    private JButton ajouterButton;
+
+    public MainApplication() {
+        setTitle("Système de Livraison de Colis");
+        setSize(900, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Configuration principale avec un BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // En-tête
+        JLabel headerLabel = new JLabel("Gestion des Colis", SwingConstants.CENTER);
+        headerLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        mainPanel.add(headerLabel, BorderLayout.NORTH);
+
+        // Créer et configurer le formulaire
+        initComponents(); // Configuration des composants
+
+        // Ajouter le formulaire dans la partie supérieure
+        mainPanel.add(formPanel, BorderLayout.PAGE_START);
+
+        // Liste des colis
+        JScrollPane scrollPane = new JScrollPane(colisList);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Liste des Colis"));
+        colisList.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
+        // Listener pour les détails du colis
+        colisList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && colisList.getSelectedValue() != null) {
+                Colis selectedColis = colisList.getSelectedValue();
+                JOptionPane.showMessageDialog(this, selectedColis.afficherDetails(),
+                        "Détails du Colis", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        // Ajouter la liste sous le formulaire
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Pied de page
+        JLabel footerLabel = new JLabel("Application développée par Fourat", SwingConstants.CENTER);
+        footerLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        mainPanel.add(footerLabel, BorderLayout.SOUTH);
+
+        // Ajouter le panneau principal à la fenêtre
+        add(mainPanel);
+
+        new SimulateurLivraison(gestionnaireColis, this).start();
+    }
+
+    private void initComponents() {
+        formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Ajouter un Colis"));
+
+        // Charger l'image et la redimensionner
+        ImageIcon imageIcon = new ImageIcon("/colis.jpg"); // Assurez-vous que l'image est dans le répertoire du projet
+        Image image = imageIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Redimensionner l'image
+        JLabel imageLabel = new JLabel(new ImageIcon(image));
+
+        // Ajouter l'image au formulaire à côté des champs
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Position de l'image
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        formPanel.add(imageLabel, gbc);
+
+        // Ajouter le champ utilisateur
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        formPanel.add(new JLabel("Nom Utilisateur:"), gbc);
+
+        utilisateurField = new JTextField(20);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        formPanel.add(utilisateurField, gbc);
+
+        // Ajouter le champ destination
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        formPanel.add(new JLabel("Destination:"), gbc);
+
+        destinationField = new JTextField(20);
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        formPanel.add(destinationField, gbc);
+
+        // Ajouter le bouton
+        ajouterButton = new JButton("Ajouter");
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        formPanel.add(ajouterButton, gbc);
+
+        ajouterButton.addActionListener((ActionEvent e) -> {
+            String utilisateur = utilisateurField.getText();
+            String destination = destinationField.getText();
+            if (!utilisateur.isEmpty() && !destination.isEmpty()) {
+                Colis colis = new Colis(
+                        gestionnaireColis.obtenirColis().size() + 1,
+                        "En attente",
+                        utilisateur,
+                        destination,
+                        new Date(),
+                        null
+                );
+                gestionnaireColis.ajouterColis(colis);
+                utilisateurField.setText("");
+                destinationField.setText("");
+                mettreAJourListe();
+            } else {
+                JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.",
+                        "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
+    private void mettreAJourListe() {
+        listModel.clear();
+        for (Colis colis : gestionnaireColis.obtenirColis()) {
+            listModel.addElement(colis);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MainApplication().setVisible(true));
+    }
+}
